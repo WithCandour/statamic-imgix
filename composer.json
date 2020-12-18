@@ -1,0 +1,29 @@
+{
+    "name": "withcandour/statamic-imgix",
+    "version": "1.0.0-beta",
+    "description": "Statamic Imgix",
+    "autoload": {
+        "psr-4": {
+            "WithCandour\\StatamicImgix\\": "src"
+        }
+    },
+    "authors": [
+        {
+            "name": "Candour"
+        }
+    ],
+    "extra": {
+        "statamic": {
+            "name": "Imgix",
+            "description": "Generate Imgix URLs from your Statamic assets"
+        },
+        "laravel": {
+            "providers": [
+                "WithCandour\\StatamicImgix\\ServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "imgix/imgix-php": "^3.3"
+    }
+}
