@@ -1,6 +1,6 @@
 {
     "name": "withcandour/statamic-imgix",
-    "version": "1.0.0-beta",
+    "version": "0.1.0",
     "description": "Statamic Imgix",
     "autoload": {
         "psr-4": {
