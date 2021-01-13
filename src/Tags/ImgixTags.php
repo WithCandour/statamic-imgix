@@ -30,6 +30,15 @@ class ImgixTags extends Tags
     /**
      * @return string
      */
+    public function imageSrcset()
+    {
+        $sorted_params = $this->sortParams($this->params);
+        return Imgix::buildSrcset($sorted_params['path'], $sorted_params['imgix']);
+    }
+
+    /**
+     * @return string
+     */
     public function imageTag()
     {
         $src = $this->imageUrl();
