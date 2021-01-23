@@ -20,7 +20,7 @@ class ImgixHelper
     public static function processParams(array $params = [])
     {
         $sorted = [
-            'path' => $params['path'],
+            'path' => $params['path'] ?: "",
             'html' => [],
             'imgix' => [],
         ];
