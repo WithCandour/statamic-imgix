@@ -6,7 +6,7 @@ use Illuminate\Support\Str;
 
 class ImgixHelper
 {
-    private static $html_params = ['accesskey', 'align', 'alt', 'border', 'class', 'contenteditable', 'contextmenu', 'dir', 'height', 'hidden', 'id', 'lang', 'longdesc', 'sizes', 'style', 'tabindex', 'title', 'usemap', 'width'];
+    private static $html_params = ['accesskey', 'align', 'alt', 'border', 'class', 'contenteditable', 'contextmenu', 'dir', 'height', 'hidden', 'id', 'lang', 'loading', 'longdesc', 'sizes', 'style', 'tabindex', 'title', 'usemap', 'width'];
 
     private static $sorter_exclude = ['path', 'sizes', 'focus', 'default-focus'];
 
