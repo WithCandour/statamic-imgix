@@ -66,9 +66,14 @@ class ImgixTags extends Tags
     public function responsivePictureTag()
     {
         $sizes = $this->params->explode('sizes');
+        $size_params_overrides = collect($this->params->explode('size-params-overrides'))->reduce(function($size_categories, $override) {
+            preg_match('/(\d+): ?\[(.*)\]/', $override, $matches);
+            $size_categories[$matches[1]] = $matches[2];
+            return $size_categories;
+        }, []);
         $sorted_params = $this->sortParams($this->params);
         $html_attrs = $this->buildHtmlAttrs($sorted_params);
-        $sources = $this->buildSources($sorted_params['path'], $sizes, $sorted_params['imgix']);
+        $sources = $this->buildSources($sorted_params['path'], $sizes, $sorted_params['imgix'], $size_params_overrides);
         $image_tag = $this->imageTag();
         return "<picture>{$sources}{$image_tag}</picture>";
     }
@@ -109,17 +114,30 @@ class ImgixTags extends Tags
      * @param string $path
      * @param array $sizes
      * @param array $params
+     * @param array $size_params_overrides
      *
      * @return string
      */
-    protected function buildSources(string $path, array $sizes, array $params)
+    protected function buildSources(string $path, array $sizes, array $params, array $size_params_overrides)
     {
         $sources = [];
         foreach($sizes as $size) {
             // min-width: [widthxheight]
             preg_match('/(\d+): ?\[(\d+)x(\d+)\]/', $size, $matches);
 
+            $screen_size = $matches[1];
+
             $params = array_merge($params, ['w' => $matches[2], 'h' => $matches[3]]);
+
+            // Overrides
+            if(!empty($size_params_overrides[$screen_size])) {
+                $override_params = explode(', ', $size_params_overrides[$screen_size]);
+                foreach($override_params as $override_param) {
+                    [$param_name, $param_value] = explode('=', $override_param);
+                    $params[$param_name] = $param_value;
+                }
+            }
+
             $srcset = Imgix::buildSrcset($path, $params);
 
             $sources[] = "<source media=\"(min-width:{$matches[1]}px)\" srcset=\"{$srcset}\">";

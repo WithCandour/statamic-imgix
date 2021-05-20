@@ -8,7 +8,7 @@ class ImgixHelper
 {
     private static $html_params = ['accesskey', 'align', 'alt', 'border', 'class', 'contenteditable', 'contextmenu', 'dir', 'height', 'hidden', 'id', 'lang', 'loading', 'longdesc', 'sizes', 'style', 'tabindex', 'title', 'usemap', 'width'];
 
-    private static $sorter_exclude = ['path', 'sizes', 'focus', 'default-focus'];
+    private static $sorter_exclude = ['path', 'sizes', 'size-params-overrides', 'focus', 'default-focus'];
 
     /**
      * Sort the params and perform any required processing
@@ -25,13 +25,15 @@ class ImgixHelper
             'imgix' => [],
         ];
 
-        // Split the `focus` parameter into fp-x and fp-y for imgix
+        // Split the `focus` parameter into fp-x, fp-y and fp-z for imgix
         if (isset($params['focus']) || isset($params['default-focus'])) {
             $focus = isset($params['focus']) ? $params['focus'] : $params['default-focus'];
             $fx = explode('-', $focus)[0];
             $fy = explode('-', $focus)[1];
+            $fz = explode('-', $focus)[2];
             $sorted['imgix']['fp-x'] = (int)$fx / 100;
             $sorted['imgix']['fp-y'] = (int)$fy / 100;
+            $sorted['imgix']['fp-z'] = (float)$fz;
         }
 
         // Unset the excluded params
