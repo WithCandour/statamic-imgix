@@ -6,4 +6,5 @@ return [
     'use_https' => true,
     'include_library_param' => true,
     'srcset_resolutions' => [1, 2],
+    'default_params' => [],
 ];

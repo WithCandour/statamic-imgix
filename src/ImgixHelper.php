@@ -22,7 +22,7 @@ class ImgixHelper
         $sorted = [
             'path' => $params['path'] ?: "",
             'html' => [],
-            'imgix' => [],
+            'imgix' => config('imgix.default_params', []),
         ];
 
         // Split the `focus` parameter into fp-x, fp-y and fp-z for imgix
