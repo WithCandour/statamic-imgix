@@ -32,6 +32,6 @@ class DefaultImgixParameters extends Modifier
         }
 
         // rebuild the query and URL
-        return $url['scheme'] . $url['host'] . $url['path'] . \http_build_query($query);;
+        return $url['scheme'] . $url['host'] . $url['path'] . \http_build_query($query);
     }
 }
