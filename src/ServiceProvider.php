@@ -4,6 +4,7 @@ namespace WithCandour\StatamicImgix;
 
 use Statamic\Providers\AddonServiceProvider;
 use WithCandour\StatamicImgix\Tags\ImgixTags;
+use WithCandour\StatamicImgix\Modifiers\DefaultImgixParameters;
 
 class ServiceProvider extends AddonServiceProvider
 {
@@ -23,5 +24,9 @@ class ServiceProvider extends AddonServiceProvider
 
     protected $tags = [
         ImgixTags::class
+    ];
+
+    protected $modifiers = [
+        DefaultImgixParameters::class
     ];
 }
