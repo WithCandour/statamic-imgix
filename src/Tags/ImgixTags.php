@@ -36,13 +36,41 @@ class ImgixTags extends Tags
         return Imgix::buildSrcset($sorted_params['path'], $sorted_params['imgix']);
     }
 
+    public function getWidthHeight($sizes = null)
+    {
+        // create a new array to hold the maximum width and height
+        $sizes_sort = [];
+
+        // loop through sizes array
+        foreach($sizes as $size) {
+            preg_match('/(\d+): ?\[(\d+)x(\d+)\]/', $size, $matches);
+
+            // push the width and height into the array
+            array_push($sizes_sort, array('screen_size' => $matches[1], 'width' => $matches[2], 'height' => $matches[3]));
+        }
+
+        // order $sizes_sort by screen_size descending
+        usort($sizes_sort, function($a, $b) {
+            return $b['screen_size'] <=> $a['screen_size'];
+        });
+
+        // return the max width and height of the first item in the array
+        $dimensions = array('width' => $sizes_sort[0]['width'], 'height' => $sizes_sort[0]['height']);
+
+        return $dimensions;
+    }
+
     /**
      * @return string
      */
-    public function imageTag()
+    public function imageTag($sizes = null)
     {
         $src = $this->imageUrl();
         $html_attrs = $this->buildHtmlAttrs($this->sortParams($this->params));
+        if($sizes) {
+            $dimensions = $this->getWidthHeight($sizes);
+            $html_attrs .= " width=\"{$dimensions['width']}\" height=\"{$dimensions['height']}\"";
+        }
         return "<img src=\"{$src}\" {$html_attrs}>";
     }
 
@@ -74,7 +102,7 @@ class ImgixTags extends Tags
         $sorted_params = $this->sortParams($this->params);
         $html_attrs = $this->buildHtmlAttrs($sorted_params);
         $sources = $this->buildSources($sorted_params['path'], $sizes, $sorted_params['imgix'], $size_params_overrides);
-        $image_tag = $this->imageTag();
+        $image_tag = $this->imageTag($sizes);
         return "<picture>{$sources}{$image_tag}</picture>";
     }
 
@@ -122,7 +150,7 @@ class ImgixTags extends Tags
     {
         $sources = [];
         foreach($sizes as $size) {
-            // min-width: [widthxheight]
+        
             preg_match('/(\d+): ?\[(\d+)x(\d+)\]/', $size, $matches);
 
             $screen_size = $matches[1];
@@ -140,7 +168,7 @@ class ImgixTags extends Tags
 
             $srcset = Imgix::buildSrcset($path, $params);
 
-            $sources[] = "<source media=\"(min-width:{$matches[1]}px)\" srcset=\"{$srcset}\">";
+            $sources[] = "<source media=\"(min-width:{$screen_size}px)\" srcset=\"{$srcset}\" width=\"{$params['w']}\" height=\"{$params['h']}\">";
         }
         return implode('', $sources);
     }
