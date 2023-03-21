@@ -80,6 +80,8 @@ class ImgixTags extends Tags
             $dimensions = $this->getWidthHeight($sizes);
             $html_attrs .= " width=\"{$dimensions['width']}\" height=\"{$dimensions['height']}\"";
         }
+        // add lazy loading attribute
+        $html_attrs .= ' loading="lazy"';
         return "<img src=\"{$src}\" {$html_attrs}>";
     }
 
