@@ -36,28 +36,37 @@ class ImgixTags extends Tags
         return Imgix::buildSrcset($sorted_params['path'], $sorted_params['imgix']);
     }
 
-    public function getWidthHeight($sizes = null)
+    /**
+     * @return array
+     */
+    private function getWidthHeight($sizes = null)
     {
-        // create a new array to hold the maximum width and height
-        $sizes_sort = [];
-
-        // loop through sizes array
-        foreach($sizes as $size) {
-            preg_match('/(\d+): ?\[(\d+)x(\d+)\]/', $size, $matches);
-
-            // push the width and height into the array
-            array_push($sizes_sort, array('screen_size' => $matches[1], 'width' => $matches[2], 'height' => $matches[3]));
+        if ($sizes === null) {
+            return ['width' => 0, 'height' => 0];
         }
 
-        // order $sizes_sort by screen_size descending
-        usort($sizes_sort, function($a, $b) {
-            return $b['screen_size'] <=> $a['screen_size'];
-        });
+        $maxWidth = 0;
+        $maxHeight = 0;
+        $maxScreenSize = 0;
 
-        // return the max width and height of the first item in the array
-        $dimensions = array('width' => $sizes_sort[0]['width'], 'height' => $sizes_sort[0]['height']);
+        foreach ($sizes as $size) {
+            preg_match('/(\d+): ?\[(\d+)x(\d+)\]/', $size, $matches);
 
-        return $dimensions;
+            $screenSize = (int)$matches[1];
+            $width = (int)$matches[2];
+            $height = (int)$matches[3];
+
+            if ($screenSize > $maxScreenSize) {
+                $maxScreenSize = $screenSize;
+                $maxWidth = $width;
+                $maxHeight = $height;
+            } elseif ($screenSize === $maxScreenSize) {
+                $maxWidth = max($maxWidth, $width);
+                $maxHeight = max($maxHeight, $height);
+            }
+        }
+
+        return ['width' => $maxWidth, 'height' => $maxHeight];
     }
 
     /**
@@ -94,16 +103,37 @@ class ImgixTags extends Tags
     public function responsivePictureTag()
     {
         $sizes = $this->params->explode('sizes');
-        $size_params_overrides = collect($this->params->explode('size-params-overrides'))->reduce(function($size_categories, $override) {
-            preg_match('/(\d+): ?\[(.*)\]/', $override, $matches);
-            $size_categories[$matches[1]] = $matches[2];
-            return $size_categories;
-        }, []);
+        $size_params_overrides = $this->parseSizeOverrides($this->params->explode('size-params-overrides'));
         $sorted_params = $this->sortParams($this->params);
         $html_attrs = $this->buildHtmlAttrs($sorted_params);
-        $sources = $this->buildSources($sorted_params['path'], $sizes, $sorted_params['imgix'], $size_params_overrides);
-        $image_tag = $this->imageTag($sizes);
-        return "<picture>{$sources}{$image_tag}</picture>";
+
+        return sprintf(
+            "<picture>%s%s</picture>",
+            $this->buildSources($sorted_params['path'], $sizes, $sorted_params['imgix'], $size_params_overrides),
+            $this->imageTag($sizes)
+        );
+    }
+
+    /**
+     * Parse size overrides
+     *
+     * @param array $overrides
+     *
+     * @return array
+     */
+    private function parseSizeOverrides($overrides)
+    {
+        $size_categories = [];
+
+        if (is_array($overrides)) {
+            foreach ($overrides as $override) {
+                if (preg_match('/(\d+): ?\[(.*)\]/', $override, $matches)) {
+                    $size_categories[$matches[1]] = $matches[2];
+                }
+            }
+        }
+
+        return $size_categories;
     }
 
     /**
@@ -150,7 +180,7 @@ class ImgixTags extends Tags
     {
         $sources = [];
         foreach($sizes as $size) {
-        
+
             preg_match('/(\d+): ?\[(\d+)x(\d+)\]/', $size, $matches);
 
             $screen_size = $matches[1];
