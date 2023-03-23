@@ -50,7 +50,7 @@ class ImgixHelper
 
             if ($is_html_param || $is_data_param || $is_aria_param) {
                 $sorted['html'][$key] = $val;
-            } else if ($picture_params) {
+            } else if ($is_picture_param) {
                 $sorted['picture'][$key] = $val;
             } else {
                 $sorted['imgix'][$key] = $val;
