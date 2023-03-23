@@ -183,10 +183,10 @@ class ImgixTags extends Tags
         $picture_params = $params['picture'];
         $html = '';
 
-        // these params are prefixed with picture_ in the tag and need to be stripped
-        $picture_params = array_filter($picture_params, function($key) {
-            return strpos($key, 'picture_') !== 0;
-        }, ARRAY_FILTER_USE_KEY);
+        // these params are prefixed with picture_ and picture_ should be removed
+        $picture_params = array_map(function($key) {
+            return preg_replace('/^picture_/', '', $key);
+        }, $picture_params);
 
         foreach ($picture_params as $key => $val) {
             $html .= " {$key}=\"{$val}\"";
