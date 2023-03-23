@@ -39,7 +39,7 @@ class ImgixTags extends Tags
     /**
      * @return array
      */
-    private function getWidthHeight($sizes = null)
+    private function getMaxWidthHeight($sizes = null)
     {
         if ($sizes === null) {
             return ['width' => 0, 'height' => 0];
@@ -77,7 +77,7 @@ class ImgixTags extends Tags
         $src = $this->imageUrl();
         $html_attrs = $this->buildHtmlAttrs($this->sortParams($this->params));
         if($sizes) {
-            $dimensions = $this->getWidthHeight($sizes);
+            $dimensions = $this->getMaxWidthHeight($sizes);
             $html_attrs .= " width=\"{$dimensions['width']}\" height=\"{$dimensions['height']}\"";
         }
         // add lazy loading attribute
@@ -108,12 +108,15 @@ class ImgixTags extends Tags
         $size_params_overrides = $this->parseSizeOverrides($this->params->explode('size-params-overrides'));
         $sorted_params = $this->sortParams($this->params);
         $html_attrs = $this->buildHtmlAttrs($sorted_params);
+        $picture_attrs = $this->buildPictureAttrs($sorted_params);
 
         return sprintf(
-            "<picture>%s%s</picture>",
+            "<picture%s>%s%s</picture>",
+            $picture_attrs ? $picture_attrs : '',
             $this->buildSources($sorted_params['path'], $sizes, $sorted_params['imgix'], $size_params_overrides),
             $this->imageTag($sizes)
         );
+
     }
 
     /**
@@ -162,6 +165,25 @@ class ImgixTags extends Tags
         $html = '';
 
         foreach ($html_params as $key => $val) {
+            $html .= " {$key}=\"{$val}\"";
+        }
+
+        return $html;
+    }
+
+    /**
+     * Build picture attributes string from a list
+     *
+     * @param array $params
+     * @return string
+     */
+
+    protected function buildPictureAttrs($params)
+    {
+        $picture_params = $params['picture'];
+        $html = '';
+
+        foreach ($picture_params as $key => $val) {
             $html .= " {$key}=\"{$val}\"";
         }
 
