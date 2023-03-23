@@ -37,12 +37,51 @@ class ImgixTags extends Tags
     }
 
     /**
+     * @return array
+     */
+    private function getMaxWidthHeight($sizes = null)
+    {
+        if ($sizes === null) {
+            return ['width' => 0, 'height' => 0];
+        }
+
+        $maxWidth = 0;
+        $maxHeight = 0;
+        $maxScreenSize = 0;
+
+        foreach ($sizes as $size) {
+            preg_match('/(\d+): ?\[(\d+)x(\d+)\]/', $size, $matches);
+
+            $screenSize = (int)$matches[1];
+            $width = (int)$matches[2];
+            $height = (int)$matches[3];
+
+            if ($screenSize > $maxScreenSize) {
+                $maxScreenSize = $screenSize;
+                $maxWidth = $width;
+                $maxHeight = $height;
+            } elseif ($screenSize === $maxScreenSize) {
+                $maxWidth = max($maxWidth, $width);
+                $maxHeight = max($maxHeight, $height);
+            }
+        }
+
+        return ['width' => $maxWidth, 'height' => $maxHeight];
+    }
+
+    /**
      * @return string
      */
-    public function imageTag()
+    public function imageTag($sizes = null)
     {
         $src = $this->imageUrl();
         $html_attrs = $this->buildHtmlAttrs($this->sortParams($this->params));
+        if($sizes) {
+            $dimensions = $this->getMaxWidthHeight($sizes);
+            $html_attrs .= " width=\"{$dimensions['width']}\" height=\"{$dimensions['height']}\"";
+        }
+        // add lazy loading attribute
+        $html_attrs .= ' loading="lazy"';
         return "<img src=\"{$src}\" {$html_attrs}>";
     }
 
@@ -66,16 +105,41 @@ class ImgixTags extends Tags
     public function responsivePictureTag()
     {
         $sizes = $this->params->explode('sizes');
-        $size_params_overrides = collect($this->params->explode('size-params-overrides'))->reduce(function($size_categories, $override) {
-            preg_match('/(\d+): ?\[(.*)\]/', $override, $matches);
-            $size_categories[$matches[1]] = $matches[2];
-            return $size_categories;
-        }, []);
+        $size_params_overrides = $this->parseSizeOverrides($this->params->explode('size-params-overrides'));
         $sorted_params = $this->sortParams($this->params);
         $html_attrs = $this->buildHtmlAttrs($sorted_params);
-        $sources = $this->buildSources($sorted_params['path'], $sizes, $sorted_params['imgix'], $size_params_overrides);
-        $image_tag = $this->imageTag();
-        return "<picture>{$sources}{$image_tag}</picture>";
+
+        $picture_attrs = $this->buildPictureAttrs($sorted_params);
+
+        return sprintf(
+            "<picture%s>%s%s</picture>",
+            $picture_attrs ? $picture_attrs : '',
+            $this->buildSources($sorted_params['path'], $sizes, $sorted_params['imgix'], $size_params_overrides),
+            $this->imageTag($sizes)
+        );
+
+    }
+
+    /**
+     * Parse size overrides
+     *
+     * @param array $overrides
+     *
+     * @return array
+     */
+    private function parseSizeOverrides($overrides)
+    {
+        $size_categories = [];
+
+        if (is_array($overrides)) {
+            foreach ($overrides as $override) {
+                if (preg_match('/(\d+): ?\[(.*)\]/', $override, $matches)) {
+                    $size_categories[$matches[1]] = $matches[2];
+                }
+            }
+        }
+
+        return $size_categories;
     }
 
     /**
@@ -109,6 +173,36 @@ class ImgixTags extends Tags
     }
 
     /**
+     * Build picture attributes string from a list
+     *
+     * @param array $params
+     * @return string
+     */
+
+    protected function buildPictureAttrs($params)
+    {
+        $picture_params = $params['picture'];
+        $html = '';
+
+        // the array has keys that are prefixed with 'picture_'
+        // for example 'picture_class' => 'col-span-6 md:col-span-12'
+        // we need to remove the prefix, so we can use the key as an attribute
+        // for example 'class' => 'col-span-6 md:col-span-12'
+        $picture_params = array_combine(
+            array_map(function($key) {
+                return preg_replace('/^picture_/', '', $key);
+            }, array_keys($picture_params)),
+            array_values($picture_params)
+        );
+
+        foreach ($picture_params as $key => $val) {
+            $html .= " {$key}=\"{$val}\"";
+        }
+
+        return $html;
+    }
+
+    /**
      * Generate <picture /> sources
      *
      * @param string $path
@@ -122,7 +216,7 @@ class ImgixTags extends Tags
     {
         $sources = [];
         foreach($sizes as $size) {
-            // min-width: [widthxheight]
+
             preg_match('/(\d+): ?\[(\d+)x(\d+)\]/', $size, $matches);
 
             $screen_size = $matches[1];
@@ -140,7 +234,7 @@ class ImgixTags extends Tags
 
             $srcset = Imgix::buildSrcset($path, $params);
 
-            $sources[] = "<source media=\"(min-width:{$matches[1]}px)\" srcset=\"{$srcset}\">";
+            $sources[] = "<source media=\"(min-width:{$screen_size}px)\" srcset=\"{$srcset}\" width=\"{$params['w']}\" height=\"{$params['h']}\">";
         }
         return implode('', $sources);
     }
