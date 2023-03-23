@@ -108,6 +108,7 @@ class ImgixTags extends Tags
         $size_params_overrides = $this->parseSizeOverrides($this->params->explode('size-params-overrides'));
         $sorted_params = $this->sortParams($this->params);
         $html_attrs = $this->buildHtmlAttrs($sorted_params);
+
         $picture_attrs = $this->buildPictureAttrs($sorted_params);
 
         return sprintf(
@@ -183,10 +184,16 @@ class ImgixTags extends Tags
         $picture_params = $params['picture'];
         $html = '';
 
-        // these params are prefixed with picture_ and picture_ should be removed
-        $picture_params = array_map(function($key) {
-            return preg_replace('/^picture_/', '', $key);
-        }, $picture_params);
+        // the array has keys that are prefixed with 'picture_'
+        // for example 'picture_class' => 'col-span-6 md:col-span-12'
+        // we need to remove the prefix, so we can use the key as an attribute
+        // for example 'class' => 'col-span-6 md:col-span-12'
+        $picture_params = array_combine(
+            array_map(function($key) {
+                return preg_replace('/^picture_/', '', $key);
+            }, array_keys($picture_params)),
+            array_values($picture_params)
+        );
 
         foreach ($picture_params as $key => $val) {
             $html .= " {$key}=\"{$val}\"";
