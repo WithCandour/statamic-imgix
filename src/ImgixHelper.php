@@ -7,7 +7,11 @@ use Illuminate\Support\Str;
 class ImgixHelper
 {
     private static $html_params = ['accesskey', 'align', 'alt', 'border', 'class', 'contenteditable', 'contextmenu', 'dir', 'height', 'hidden', 'id', 'lang', 'loading', 'longdesc', 'sizes', 'style', 'tabindex', 'title', 'usemap', 'width'];
-    private static $picture_params = ['picture_class'];
+    public static function getPrefixedHtmlParams() {
+        return array_map(function ($param) {
+            return 'picture_' . $param;
+        }, self::$html_params);
+    }
     private static $sorter_exclude = ['path', 'sizes', 'size-params-overrides', 'focus', 'default-focus'];
 
     /**
@@ -44,8 +48,9 @@ class ImgixHelper
         }
 
         foreach ($params as $key => $val) {
+
             $is_html_param = in_array($key, self::$html_params);
-            $is_picture_param = in_array($key, self::$picture_params);
+            $is_picture_param = in_array($key, ImgixHelper::getPrefixedHtmlParams());
             $is_data_param = Str::startsWith($key, 'data-');
             $is_aria_param = Str::startsWith($key, 'aria-');
 
